@@ -1,0 +1,33 @@
+version: '3'
+services:
+  db:
+    image: postgres
+    environment:
+      POSTGRES_DB: ecommerce_db
+      POSTGRES_USER: ecommerce
+      POSTGRES_PASSWORD: ecommerce
+    ports:
+      - "5432:5432"
+  web:
+    build: .
+    command: gunicorn ecommerce_backend.wsgi:application --bind 0.0.0.0:8000
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+  redis:
+    image: redis
+  celery:
+    build: .
+    command: celery -A ecommerce_backend worker -l info
+    depends_on:
+      - web
+      - redis
+  celery-beat:
+    build: .
+    command: celery -A ecommerce_backend beat -l info
+    depends_on:
+      - web
+      - redis
